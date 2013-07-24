@@ -1,0 +1,147 @@
+package br.ufc.great.syssu.test;
+
+import java.util.List;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.StreamHandler;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.widget.TextView;
+import br.ufc.great.syssu.R;
+import br.ufc.great.syssu.base.Pattern;
+import br.ufc.great.syssu.base.Tuple;
+import br.ufc.great.syssu.base.TupleField;
+import br.ufc.great.syssu.base.interfaces.IDomain;
+import br.ufc.great.syssu.ubibroker.LocalUbiBroker;
+import br.ufc.great.syssu.ubibroker.UbiBroker;
+import br.ufc.great.syssu.ubicentre.CustomLogFormatter;
+import br.ufc.great.syssu.ubicentre.UbiCentreProcess;
+
+public class SysSUTester extends Activity {
+
+	private static int port = 9091;
+	private static String logfile;
+	private static TextView localTupleSpace;
+
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.syssu_mobile);
+
+		localTupleSpace = (TextView) findViewById(R.id.textView_main);
+
+		Logger logger = Logger.getLogger("UbiCentre");
+		logger.addHandler(new StreamHandler());
+
+		if (logfile != null) {
+			try {
+				FileHandler fileHandler = new FileHandler(logfile, true);
+				fileHandler.setFormatter(new CustomLogFormatter());
+				logger.addHandler(fileHandler);
+			} catch (Exception ex) {
+				logger.severe("Error in starting UbiCentre. Invalid log file.");
+				System.exit(1);
+			}
+		}
+
+		try {
+			Thread t = new Thread(new UbiCentreProcess(port), "UbiCentre Process");
+			t.start();
+			logger.info("UbiCentre started and listening in port " + port + ".");
+			//t.join();
+		} catch (Exception ex) {
+			logger.log(Level.SEVERE, "Error in starting UbiCentre.", ex);
+			System.exit(1);
+		}
+
+		testarPutRead();
+		testarPutTake();
+	}
+
+	public static void testarPutRead() {
+		try {
+
+			// Create tuples
+			Tuple tuple = (Tuple) new Tuple().addField("user", "a1");
+			Tuple tuple2 = (Tuple) new Tuple().addField("user", "b1");
+
+			// Create remote broker
+			UbiBroker remoteBroker = UbiBroker.createUbibroker("localhost", port, 9092);
+			IDomain remoteDomain = remoteBroker.getDomain("great");
+
+			// Remote Tuple insert
+			System.out.println("(Remote) Put tupla -> " + tuple.getField(0).getValue());
+			remoteDomain.put(tuple, null);
+
+			// Create local broker
+			LocalUbiBroker localBroker = LocalUbiBroker.createUbibroker();
+			IDomain	localDomain = localBroker.getDomain("great");
+			
+			//Subscription for listen all "put" events on ubiapp local domain
+			ReactionImplementation LocalReaction;
+			LocalReaction = new ReactionImplementation(true);
+			LocalReaction.setId(localDomain.subscribe(LocalReaction, "put", ""));
+
+			//Subscription for listen all "put" events on ubiapp local domain
+			ReactionImplementation2 LocalReaction2;
+			LocalReaction2 = new ReactionImplementation2(true);
+			LocalReaction2.setId(localDomain.subscribe(LocalReaction2, "put", ""));
+
+			
+			// Local Tuple insert
+			System.out.println("(Local) Put tupla -> " + tuple2.getField(0).getValue());
+			localDomain.put(tuple2, null);
+
+			// Read Local Tuples	
+			Pattern pattern = (Pattern) new Pattern().addField("user", "?string");
+			List<Tuple> tuples = localBroker.getDomain("great").read(
+					pattern,
+					"", //function filter(tuple) {return (tuple.user.indexOf('a') !=-1)}
+					"");
+			System.out.println("Qtd de tuplas contendo 'a': " + tuples.size());
+
+			// Writes local tuples in tupleSpace EditText
+			localTupleSpace.setText("");
+			String srtTuple;
+			for (Tuple tp : tuples) {
+				srtTuple = "{";
+				for (TupleField tupleField : tp) {
+					srtTuple = srtTuple + "(" + tupleField.getName() +","+ tupleField.getValue() + ")";
+				}
+				srtTuple = srtTuple + "}";
+				localTupleSpace.append("\n" + srtTuple);
+			}
+			System.out.println("Tuplas contendo 'a': " + localTupleSpace.getText().toString());
+
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void testarPutTake() {
+		try {
+			LocalUbiBroker localBroker = LocalUbiBroker.createUbibroker();
+
+			Pattern pattern = (Pattern)new Pattern().addField("user", "user").addField("location", "?string");
+			
+			Tuple tuple1 = (Tuple)new Tuple().addField("user", "user").addField("location", "FORTALEZA");
+			Tuple tuple2 = (Tuple) new Tuple().addField("user", "user").addField("location", "MANAUS");
+
+			IDomain localDomain = localBroker.getDomain("print.great");
+
+			localDomain.put(tuple1, null);
+			localDomain.put(tuple2, null);
+
+			List<Tuple> tuples = localBroker.getDomain("print.great").take(
+					pattern,
+					"", //function filter(tuple) {return (tuple.location.indexOf('FOR') !=-1)}
+					"");
+			System.out.println("tupla -> " + tuples.size());
+		
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}

@@ -1,0 +1,48 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/menu_Put"
+        android:orderInCategory="100"
+        android:title="Put Local"/>
+    <item
+        android:id="@+id/menu_ReadLocal"
+        android:orderInCategory="100"
+        android:title="ReadLocal"/>
+    <item
+        android:id="@+id/menu_ReadInfra"
+        android:orderInCategory="100"
+        android:title="ReadInfra"/>
+    <item
+        android:id="@+id/menu_ReadAdhoc"
+        android:orderInCategory="100"
+        android:title="ReadAdhoc"/>
+    <item
+        android:id="@+id/menu_ReadAll"
+        android:orderInCategory="100"
+        android:title="ReadAll"/>
+    <item
+        android:id="@+id/menu_ReadAny"
+        android:orderInCategory="100"
+        android:title="ReadAny"/>
+    <item
+        android:id="@+id/menu_Print"
+        android:orderInCategory="100"
+        android:title="Print Local Tuples"/>
+    <item
+        android:id="@+id/menu_Clear"
+        android:orderInCategory="100"
+        android:title="Clear"/>
+    <item
+        android:id="@+id/menu_Discoverable"
+        android:orderInCategory="100"
+        android:title="Discoverable"/>
+    <item
+        android:id="@+id/menu_ConnectTo"
+        android:orderInCategory="100"
+        android:title="Connect To ..."/>
+    <item
+        android:id="@+id/menu_PrintConnectedDevices"
+        android:orderInCategory="100"
+        android:title="Print Connected Devices"/>
+
+</menu>

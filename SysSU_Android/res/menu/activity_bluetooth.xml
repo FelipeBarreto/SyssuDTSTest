@@ -1,0 +1,48 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/menu_Discoverable"
+        android:orderInCategory="100"
+        android:title="Discoverable"/>
+    <item
+        android:id="@+id/menu_ConnectTo"
+        android:orderInCategory="100"
+        android:title="Connect To ..."/>
+    <item
+        android:id="@+id/menu_LocalRead"
+        android:orderInCategory="100"
+        android:title="LocalRead (On device)"/>
+    <item
+        android:id="@+id/menu_ServerRead"
+        android:orderInCategory="100"
+        android:title="ServerRead (wifi-TCP)"/>
+    <item
+        android:id="@+id/menu_AdhocRead"
+        android:orderInCategory="100"
+        android:title="AdhocRead (Broadcast-Bluetooth)"/>
+    <item
+        android:id="@+id/menu_Print"
+        android:orderInCategory="100"
+        android:title="Print Local Tuples"/>
+    <item
+        android:id="@+id/menu_Put"
+        android:orderInCategory="100"
+        android:title="Put Local"/>
+    <item
+        android:id="@+id/menu_Subscribe"
+        android:orderInCategory="100"
+        android:title="Subscribe"/>
+    <item
+        android:id="@+id/menu_PrintConnectedDevices"
+        android:orderInCategory="100"
+        android:title="Print Connected Devices"/>
+    <item
+        android:id="@+id/menu_Clear"
+        android:orderInCategory="100"
+        android:title="Clear"/>
+    <item
+        android:id="@+id/menu_FixedConnet"
+        android:orderInCategory="100"
+        android:title="Fixed Connet"/>
+
+</menu>
