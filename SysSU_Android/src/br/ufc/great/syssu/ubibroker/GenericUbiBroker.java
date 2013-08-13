@@ -3,38 +3,38 @@ package br.ufc.great.syssu.ubibroker;
 import java.io.IOException;
 
 import android.content.Context;
+import br.ufc.great.syssu.base.Provider;
 import br.ufc.great.syssu.base.TupleSpaceException;
 import br.ufc.great.syssu.base.interfaces.IDomain;
 import br.ufc.great.syssu.net.InfraNetworkFinder;
 
 public class GenericUbiBroker {
 
-	private LocalUbiBroker localUbiBroker = null;
-	private UbiBroker infraUbiBroker = null;
-	private UbiBroker adhocUbiBroker = null;
+	private LocalUbiBroker localUbiBroker;
+	private UbiBroker infraUbiBroker;
+	private UbiBroker adhocUbiBroker;
+	private Context context;
 
 	private GenericUbiBroker(Context context) throws IOException {
-
+		this.context = context;
 		this.localUbiBroker = LocalUbiBroker.createUbibroker();
 
+		String ubicentreAddress = null;
 		if(context != null) {
 			InfraNetworkFinder infraNetworkFinder = new InfraNetworkFinder(context);
-			String ubicentreAddress = infraNetworkFinder.getUbicentreAddress();
-
-			this.infraUbiBroker = UbiBroker.createUbibroker(
-					ubicentreAddress,
-					InfraNetworkFinder.UBICENTRE_PORT,
-					InfraNetworkFinder.REACTIONS_PORT
-					);
-
-			this.adhocUbiBroker = UbiBroker.createUbibroker(
-					ubicentreAddress, 
-					InfraNetworkFinder.UBICENTRE_PORT+3, 
-					InfraNetworkFinder.REACTIONS_PORT+3,
-					context,
-					""
-					);
+			ubicentreAddress = infraNetworkFinder.getUbicentreAddress();
 		}
+		this.adhocUbiBroker = UbiBroker.createUbibroker(
+				context,
+				Provider.ADHOC
+				);
+		this.infraUbiBroker = UbiBroker.createUbibroker(
+				ubicentreAddress,
+				InfraNetworkFinder.UBICENTRE_PORT,
+				InfraNetworkFinder.REACTIONS_PORT,
+				context,
+				Provider.INFRA
+				);
 	}
 
 	public static GenericUbiBroker createUbibroker(Context context) throws IOException {
@@ -47,10 +47,7 @@ public class GenericUbiBroker {
 	}
 
 	// Returns the UbiBroker associated domain in order to handle with tuple space operations
-	public IDomain getDomain(String name) throws TupleSpaceException {
-		GenericDomain gdDomain = new GenericDomain(name, localUbiBroker, infraUbiBroker, adhocUbiBroker);
-
-		System.out.println(gdDomain);
-		return gdDomain;
+	public IDomain getDomain(String name) throws TupleSpaceException, IOException {
+		return new GenericDomain(name, localUbiBroker, infraUbiBroker, adhocUbiBroker);
 	}
 }

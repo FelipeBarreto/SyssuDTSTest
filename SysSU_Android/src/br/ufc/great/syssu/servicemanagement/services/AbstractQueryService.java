@@ -30,7 +30,6 @@ public abstract class AbstractQueryService implements IService {
 		String key = null;
 		long timeout = 0;
 		Scope scope = null;
-
 		try {
 			if (params instanceof Map) {
 				NamedParamsRetriever retriever = new NamedParamsRetriever((Map<String, Object>) params);
@@ -39,7 +38,7 @@ public abstract class AbstractQueryService implements IService {
 				restriction = retriever.getString("filter");
 				key = retriever.getOptString("key", true, "");
 				timeout = retriever.getOptLong("timeout", 0);
-				scope = (Scope) new MapScope(retriever.getMap("scope")).getObject();
+				scope = (Scope) new MapScope(retriever.getMap("scope", true)).getObject();
 			} else if (params instanceof List) {
 				PositionalParamsRetriever retriever = new PositionalParamsRetriever((List<Object>) params);
 				domainName = retriever.getString(0);
@@ -47,7 +46,7 @@ public abstract class AbstractQueryService implements IService {
 				restriction = retriever.getString(2);
 				key = retriever.getOptString(3, "");
 				timeout = retriever.getOptLong(4, 0);
-				scope = (Scope) new MapScope(retriever.getMap(1)).getObject();
+				scope = (Scope) new MapScope(retriever.getMap(5, true)).getObject();
 			} else {
 				throw new InvalidParamsException("Invalid params type");
 			}

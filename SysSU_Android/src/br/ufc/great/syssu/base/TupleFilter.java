@@ -2,6 +2,7 @@ package br.ufc.great.syssu.base;
 
 import java.io.FileReader;
 import java.io.InputStreamReader;
+import java.io.Reader;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
@@ -36,18 +37,20 @@ public class TupleFilter {
 							filter,
 							"filter:", 1, null);
 
-					// C�digo para acesso ao arquivo dentro do JAR	
-					cx.evaluateReader(
-							scope,  // FIXME: TEMP WORKAROUND TO GET json2.js on device
-							new InputStreamReader(SysSUDTSTester.assetmanager.open("json2.js")),
-							"filter:", 1, null);
+					try {
+						// Code to access the file inside JAR	
+						cx.evaluateReader(
+								scope, // FIXME: TEMP WORKAROUND TO GET json2.js on device
+								new InputStreamReader(SysSUDTSTester.assetmanager.open("json2.js")),
+								"filter:", 1, null);
+					} catch (NoClassDefFoundError e) {
+						// Code to access the file outside JAR
+						cx.evaluateReader(
+								scope, 
+								new FileReader("json2.js"),
+								"filter:", 1, null);
+					}
 
-					// C�digo para acesso ao arquivo de fora do JAR
-//					cx.evaluateReader(
-//							scope, 
-//							new FileReader("json2.js"),
-//							"filter:", 1, null);
-					
 					Object result = cx.evaluateString( 
 							scope, 
 							"filter(tuple);",

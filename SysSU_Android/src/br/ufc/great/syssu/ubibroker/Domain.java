@@ -35,9 +35,7 @@ public class Domain implements IDomain {
     private Provider provider;
 
     Domain(String domainName, UbiBroker ubiBroker) {
-        this.name = domainName;
-        this.ubiBroker = ubiBroker;
-        this.provider = Provider.INFRA;
+        new Domain(domainName, ubiBroker, Provider.INFRA);
     }
     
     Domain(String domainName, UbiBroker ubiBroker, Provider provider) {
@@ -237,9 +235,10 @@ public class Domain implements IDomain {
 
             JSONRPC2Request not = new JSONRPC2Request(service, params, id++);
 
+            System.out.println(">>> JSONRPC2Request >>> " + not.toJSON().toJSONString());
             String result = ubiBroker.sendMessage(not.toJSON().toJSONString(), provider);
 
-            
+            System.out.println(">>> result = ubiBroker.sendMessage(not.toJSON().toJSONString(), provider) >>> " +result);
             
             if (result != null && !result.equals("")) {
                 try {

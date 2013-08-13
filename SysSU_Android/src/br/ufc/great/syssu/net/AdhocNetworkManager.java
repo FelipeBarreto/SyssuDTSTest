@@ -20,7 +20,7 @@ import br.ufc.great.syssu.ubicentre.controllers.FrontController;
 
 public class AdhocNetworkManager {
 
-	private static NetworkManager instance = null;
+	private static NetworkManager instance;
 	private static Context context;
 	public static TS_Monitor tsMonitor;
 	public static Semaphore semaphore = new Semaphore(0);

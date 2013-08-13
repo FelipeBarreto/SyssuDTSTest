@@ -8,7 +8,6 @@ public class Tuple extends AbstractFieldCollection<TupleField> implements IMatch
 
 	private long timeToLive;
 	private long putTime;
-	private Provider provider;
 	private Scope scope;
 
 	public Tuple() {
@@ -18,12 +17,6 @@ public class Tuple extends AbstractFieldCollection<TupleField> implements IMatch
 	public Tuple(long timeToLive) {
 		super();
 		setTimeToLive(timeToLive);
-	}
-
-	public Tuple(long timeToLive, Provider provider) {
-		super();
-		setTimeToLive(timeToLive);
-		setProvider(provider);
 	}
 
 	@Override
@@ -55,14 +48,6 @@ public class Tuple extends AbstractFieldCollection<TupleField> implements IMatch
 	public void setPutTime(long putTime) {
 		if(putTime < 0) throw new InvalidParameterException("Negative time");
 		this.putTime = putTime;
-	}
-	
-	public Provider getProvider() {
-		return provider;
-	}
-
-	public void setProvider(Provider provider) {
-		this.provider = provider;
 	}
 	
 	public Scope getScope() {

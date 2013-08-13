@@ -25,29 +25,21 @@ public class InfraNetworkFinder {
 	public final static int UBICENTRE_PORT = 9090;
 	public final static int REACTIONS_PORT = 9091;
 
+	private Context context;
+
 	public InfraNetworkFinder (Context context) {
-		
-		// The method execute returns the AynscTask itself, so we need to call get(). 
-		// This turned async task into a sync one, as get() waits if needed for the result to be avilable.
-		String ubiCentreIp = "";
-		try {
-			if(context != null) {
-				ubiCentreIp = new RetreiveUbicentreIP().execute(context).get();
-			}
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		setUbicentreAddress(ubiCentreIp);
+		this.context = context;
+		this.ubicentreAddress = null;
 	}
 
 	public NetworkClient getTcpNetworkClient() {
-		this.networkClient = new NetworkClient(ubicentreAddress, UBICENTRE_PORT);
-		return networkClient;		
+		String ubiCentreAddress = getUbicentreAddress();
+
+		if (ubiCentreAddress != null && ubiCentreAddress != ""){
+			this.networkClient = new NetworkClient(ubiCentreAddress, UBICENTRE_PORT);
+		}
+		
+		return networkClient;
 	}
 
 	public NetworkServer getTcpNetworkServer() throws IOException {
@@ -60,11 +52,23 @@ public class InfraNetworkFinder {
 	}
 
 	public String getUbicentreAddress() {
-		return ubicentreAddress;
-	}
+		String ubiCentreIp = null;
+		
+		// The method execute returns the AynscTask itself, so we need to call get(). 
+		// This turned async task into a sync one, as get() waits if needed for the result to be avilable.
+		try {
+			if(context != null) {
+				ubiCentreIp = new RetreiveUbicentreIP().execute(context).get();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		}
 
-	private void setUbicentreAddress(String ubicentreAddress) {
-		this.ubicentreAddress = ubicentreAddress;
+		ubicentreAddress = ubiCentreIp;
+
+		return ubicentreAddress;
 	}
 
 	// Applications targeting the Honeycomb SDK or higher throws NetworkOnMainThreadException 
@@ -72,7 +76,7 @@ public class InfraNetworkFinder {
 	private class RetreiveUbicentreIP extends AsyncTask<Context, Void, String> {
 
 		private DatagramSocket mDatagramSocket;
-		String ubicentreIP = "";
+		String ubicentreIP = null;
 
 		@Override
 		protected String doInBackground(Context... ctx) {
@@ -91,6 +95,7 @@ public class InfraNetworkFinder {
 				DatagramPacket receivePacket = new DatagramPacket(sendMessage.getBytes(), sendMessage.length());
 				do{
 					// Receive UDP broadcast message
+					mDatagramSocket.setSoTimeout(500);
 					mDatagramSocket.receive(receivePacket);
 					String receiveMessage = new String(receivePacket.getData(), 0,receivePacket.getLength());
 

@@ -3,6 +3,7 @@ package br.ufc.great.syssu.base.interfaces;
 import java.util.List;
 
 import br.ufc.great.syssu.base.Pattern;
+import br.ufc.great.syssu.base.Provider;
 import br.ufc.great.syssu.base.Scope;
 import br.ufc.great.syssu.base.Tuple;
 import br.ufc.great.syssu.base.TupleSpaceException;

@@ -1,9 +1,25 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <item
+        android:id="@+id/menu_Experiment"
+        android:orderInCategory="100"
+        android:title="Experiment"/>
+    <item
         android:id="@+id/menu_Put"
         android:orderInCategory="100"
         android:title="Put Local"/>
+     <item
+        android:id="@+id/menu_PutInfra"
+        android:orderInCategory="100"
+        android:title="Put Server"/>
+     <item
+        android:id="@+id/menu_Take"
+        android:orderInCategory="100"
+        android:title="RemoveAll"/>
+     <item
+        android:id="@+id/menu_TakeInfra"
+        android:orderInCategory="100"
+        android:title="RemoveAll-SERVER"/>
     <item
         android:id="@+id/menu_ReadLocal"
         android:orderInCategory="100"

@@ -3,6 +3,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.StreamHandler;
 
+import br.ufc.great.syssu.base.Pattern;
+import br.ufc.great.syssu.base.Provider;
 import br.ufc.great.syssu.base.Scope;
 import br.ufc.great.syssu.base.Tuple;
 import br.ufc.great.syssu.base.interfaces.IDomain;
@@ -57,11 +59,8 @@ public class Main {
 			LocalUbiBroker localBroker = LocalUbiBroker.createUbibroker();
 			// Get a domain (tuple space subset) from local broker
 			IDomain localDomain = localBroker.getDomain("scopeGreat");
-			testarPut(localDomain, 1, "local");
-			testarPut(localDomain, 2, "infra");
-			testarPut(localDomain, 1, "adhoc");
-			testarPut(localDomain, 2, "all");
-			testarPut(localDomain, 3, "any");
+			testarPut(localDomain, 10, "INFRA-SERVER");
+			//System.out.println("removed " + localDomain.take((Pattern) new Pattern().addField("contextkey", "?"), "", "").size());
 
 
 		} catch (Exception ex) {
@@ -75,26 +74,21 @@ public class Main {
 			System.out.println("\n -- testarPut -- \n");
 			// Create tuples
 			Tuple tuple = null;
-			String context;
-
-			context = "context.ambient.temperature";
-			System.out.println(context);
 
 			for (int i = 0; i < qtyTuples; i++) {
 
-				tuple = (Tuple) new Tuple().addField("contextkey",context).
-						addField("source", "physicalsensor").
-						addField("value",  18 + ( int ) ( Math.random() *3 )).
-						addField("timestamp", System.currentTimeMillis()).
-						addField("accurace", 0.8).
-						addField("unit", "C").
+				tuple = (Tuple) new Tuple().addField("contextkey","temp").
+						//						addField("source", "physicalsensor").
+						addField("value",  18 + (int) (Math.random()*5)).
+						//						addField("timestamp", System.currentTimeMillis()).
+						//						addField("accurace", 0.8).
+						//						addField("unit", "C").
 						addField("cont", i+1).
-						addField("provider", value).
-						addField("server", "SERVER");
+						addField("provider", value);
 
-				if (i == 1) {
-					tuple.setScope(hScope);
-				}
+//				if (i == 1) {
+//					tuple.setScope(hScope);
+//				}
 
 				//Tuple insert
 				domain.put(tuple, null);

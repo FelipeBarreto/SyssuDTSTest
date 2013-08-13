@@ -1,9 +1,9 @@
 package br.ufc.great.syssu.ubibroker;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import br.ufc.great.syssu.base.AbstractFieldCollection;
 import br.ufc.great.syssu.base.Pattern;
 import br.ufc.great.syssu.base.Provider;
 import br.ufc.great.syssu.base.Scope;
@@ -25,7 +25,7 @@ public class GenericDomain implements IDomain {
 	private IDomain adhocDomain;
 
 
-	GenericDomain(String domainName, LocalUbiBroker localUbiBroker, UbiBroker infraUbiBroker, UbiBroker adhocUbiBroker) throws TupleSpaceException {
+	GenericDomain(String domainName, LocalUbiBroker localUbiBroker, UbiBroker infraUbiBroker, UbiBroker adhocUbiBroker) throws TupleSpaceException, IOException {
 		this.name = domainName;
 		this.localUbiBroker = localUbiBroker;
 		this.infraUbiBroker = infraUbiBroker;
@@ -34,7 +34,7 @@ public class GenericDomain implements IDomain {
 		if (localUbiBroker != null) {
 			localDomain = localUbiBroker.getDomain(domainName);
 		}
-		if (infraUbiBroker != null) {
+		if (findServerConnection()) {
 			infraDomain = infraUbiBroker.getDomain(domainName, Provider.INFRA);
 		}
 		if (adhocUbiBroker != null) {
@@ -44,7 +44,12 @@ public class GenericDomain implements IDomain {
 
 	@Override
 	public IDomain getDomain(String name) throws TupleSpaceException {
-		return new GenericDomain(this.name + "." + name, localUbiBroker, infraUbiBroker, adhocUbiBroker);
+		try {
+			return new GenericDomain(this.name + "." + name, localUbiBroker, infraUbiBroker, adhocUbiBroker);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	@Override
@@ -52,12 +57,51 @@ public class GenericDomain implements IDomain {
 		return name;
 	}
 
+
 	@Override
 	public void put(Tuple tuple, String key) throws TupleSpaceException,
 	TupleSpaceSecurityException {
+		put(tuple, key, Provider.LOCAL);
+	}
 
-		if(localDomain != null)
-			localDomain.put(tuple, key);	
+	public void put(Tuple tuple) throws TupleSpaceException,
+	TupleSpaceSecurityException {
+		put(tuple, "", Provider.LOCAL);
+	}
+
+	public void put(Tuple tuple, Provider provider) throws TupleSpaceException,
+	TupleSpaceSecurityException {
+		put(tuple, "", provider);
+	}
+
+	public void put(Tuple tuple, String key, Provider provider) throws TupleSpaceException,
+	TupleSpaceSecurityException {
+
+		switch (provider) {
+		case INFRA:
+			if(infraDomain != null && findServerConnection()){
+				System.out.println("***Put INFRA");			
+				infraDomain.put(tuple, key);
+			}
+			break;
+		case ALL:
+			System.out.println("***Put ALL");
+			if(localDomain != null){
+				System.out.println("***Put LOCAL");
+				localDomain.put(tuple, key);
+			}
+			if(infraDomain != null && findServerConnection()){
+				System.out.println("***Put INFRA");
+				infraDomain.put(tuple, key);
+			}
+			break;
+		default:
+			if(localDomain != null){
+				System.out.println("***Put LOCAL");
+				localDomain.put(tuple, key);
+			}
+			break;
+		}		
 	}
 
 	@Override
@@ -65,6 +109,17 @@ public class GenericDomain implements IDomain {
 			throws TupleSpaceException, TupleSpaceSecurityException {
 		return read(pattern, restriction, key, scope, Provider.ANY);
 	}
+
+	public List<Tuple> read(Pattern pattern, String restriction, Scope scope)
+			throws TupleSpaceException, TupleSpaceSecurityException {
+		return read(pattern, restriction, "", scope, Provider.ANY);
+	}
+
+	public List<Tuple> read(Pattern pattern, String restriction, Scope scope, Provider provider)
+			throws TupleSpaceException, TupleSpaceSecurityException {
+		return read(pattern, restriction, "", scope, provider);
+	}
+
 
 	public List<Tuple> read(Pattern pattern, String restriction, String key, Scope scope, Provider provider)
 			throws TupleSpaceException, TupleSpaceSecurityException {
@@ -79,8 +134,8 @@ public class GenericDomain implements IDomain {
 			}
 			break;
 		case INFRA:
-			if(infraDomain != null){
-				System.out.println("***Buscando INFRA");
+			if(infraDomain != null && findServerConnection()){
+				System.out.println("***Buscando INFRA");			
 				tuples = infraDomain.read(pattern, restriction, key, scope);
 			}
 			break;
@@ -96,7 +151,7 @@ public class GenericDomain implements IDomain {
 				System.out.println("***Buscando LOCAL");
 				tuples = localDomain.read(pattern, restriction, key, scope);
 			}
-			if(infraDomain != null){
+			if(infraDomain != null && findServerConnection()){
 				System.out.println("***Buscando INFRA");
 				tuples.addAll(infraDomain.read(pattern, restriction, key, scope));
 			}
@@ -111,10 +166,11 @@ public class GenericDomain implements IDomain {
 				System.out.println("***Buscando LOCAL");
 				tuples = localDomain.read(pattern, restriction, key, scope);
 			}
-			if((tuples == null || tuples.size() == 0) &&  infraDomain != null){
+			if((tuples == null || tuples.size() == 0)){
 				System.out.println("***Buscando INFRA");
-				tuples = infraDomain.read(pattern, restriction, key, scope);
-
+				if (infraDomain != null && findServerConnection()){
+					tuples = infraDomain.read(pattern, restriction, key, scope);
+				}
 				if((tuples == null || tuples.size() == 0) && adhocDomain != null) {
 					System.out.println("***Buscando ADHOC");
 					tuples = adhocDomain.read(pattern, restriction, key, scope);
@@ -245,87 +301,59 @@ public class GenericDomain implements IDomain {
 	@Override
 	public List<Tuple> take(Pattern pattern, String restriction, String key)
 			throws TupleSpaceException, TupleSpaceSecurityException {
-		return take(pattern, restriction, key, Provider.ANY);	
+		return take(pattern, restriction, key, Provider.LOCAL);	
 	}
 
 	public List<Tuple> take(Pattern pattern, String restriction, String key, Provider provider)
 			throws TupleSpaceException, TupleSpaceSecurityException {
 
-		List<Tuple> tuples = new ArrayList<Tuple>();
-
-		if(provider == Provider.LOCAL)
-			return tuples = localDomain.take(pattern, restriction, key);
-
 		if(provider == Provider.INFRA)
-			return tuples = infraDomain.take(pattern, restriction, key);
+			return infraDomain.take(pattern, restriction, key);
 
-		// Any Provider. It's not permitted take tuple from ad hoc providers.
-		tuples = localDomain.take(pattern, restriction, key);
-		if(tuples == null || tuples.size() == 0) {
-			tuples = infraDomain.take(pattern, restriction, key);
-		}
-
-		return tuples;
+		// Default Provider. It's not permitted take tuple from ad hoc providers.
+		return localDomain.take(pattern, restriction, key);
 	}
 
 	@Override
 	public List<Tuple> takeSync(Pattern pattern, String restriction, String key, long timeout)
 			throws TupleSpaceException, TupleSpaceSecurityException {
-		return takeSync(pattern, restriction, key, timeout, Provider.ANY);	
+		return takeSync(pattern, restriction, key, timeout, Provider.LOCAL);	
 	}
 
 	public List<Tuple> takeSync(Pattern pattern, String restriction,
 			String key, long timeout, Provider provider) throws TupleSpaceException,
 			TupleSpaceSecurityException {
 
-		List<Tuple> tuples = new ArrayList<Tuple>();
-
-		if(provider == Provider.LOCAL)
-			return tuples = localDomain.takeSync(pattern, restriction, key, timeout);
-
 		if(provider == Provider.INFRA)
-			return tuples = infraDomain.takeSync(pattern, restriction, key, timeout);
+			return infraDomain.takeSync(pattern, restriction, key, timeout);
 
-		// Any Provider. It's not permitted take tuple from ad hoc providers.
-		tuples = localDomain.takeSync(pattern, restriction, key, timeout);
-		if(tuples == null || tuples.size() == 0) {
-			tuples = infraDomain.takeSync(pattern, restriction, key, timeout);
-		}
+		// Default Provider. It's not permitted take tuple from ad hoc providers.
+		return localDomain.takeSync(pattern, restriction, key, timeout);
 
-		return tuples;
 
 	}
 
 	@Override
 	public Tuple takeOne(Pattern pattern, String restriction, String key)
 			throws TupleSpaceException, TupleSpaceSecurityException {
-		return takeOne(pattern, restriction, key, Provider.ANY);
+		return takeOne(pattern, restriction, key, Provider.LOCAL);
 	}
+
 	public Tuple takeOne(Pattern pattern, String restriction, String key, Provider provider)
 			throws TupleSpaceException, TupleSpaceSecurityException {
 
-		Tuple tuple = null;
-
-		if(provider == Provider.LOCAL)
-			return tuple = localDomain.takeOne(pattern, restriction, key);
-
 		if(provider == Provider.INFRA)
-			return tuple = infraDomain.takeOne(pattern, restriction, key);
+			return infraDomain.takeOne(pattern, restriction, key);
 
-		// Any Provider. It's not permitted take tuple from ad hoc providers.
-		tuple = localDomain.takeOne(pattern, restriction, key);
-		if(tuple == null || tuple.size() == 0) {
-			tuple = infraDomain.takeOne(pattern, restriction, key);
-		}
-
-		return tuple;
+		// Default Provider. It's not permitted take tuple from ad hoc providers.
+		return localDomain.takeOne(pattern, restriction, key);
 	}
 
 	@Override
 	public Tuple takeOneSync(Pattern pattern, String restriction, String key,
 			long timeout) throws TupleSpaceException,
 			TupleSpaceSecurityException {
-		return takeOneSync(pattern, restriction, key, timeout, Provider.ANY);
+		return takeOneSync(pattern, restriction, key, timeout, Provider.LOCAL);
 	}
 
 
@@ -333,21 +361,11 @@ public class GenericDomain implements IDomain {
 			long timeout, Provider provider) throws TupleSpaceException,
 			TupleSpaceSecurityException {
 
-		Tuple tuple = null;
-
-		if(provider == Provider.LOCAL)
-			return tuple = localDomain.takeOneSync(pattern, restriction, key, timeout);
-
 		if(provider == Provider.INFRA)
-			return tuple = infraDomain.takeOneSync(pattern, restriction, key, timeout);
+			return infraDomain.takeOneSync(pattern, restriction, key, timeout);
 
-		// Any Provider. It's not permitted take tuple from ad hoc providers.
-		tuple = localDomain.takeOneSync(pattern, restriction, key, timeout);
-		if(tuple == null || tuple.size() == 0) {
-			tuple = infraDomain.takeOneSync(pattern, restriction, key, timeout);
-		}
-
-		return tuple;
+		// Default Provider. It's not permitted take tuple from ad hoc providers.
+		return localDomain.takeOneSync(pattern, restriction, key, timeout);
 	}
 
 	@Override
@@ -395,5 +413,28 @@ public class GenericDomain implements IDomain {
 		localDomain.unsubscribe(reactionId, key);
 		infraDomain.unsubscribe(reactionId, key);
 		adhocDomain.unsubscribe(reactionId, key);
+	}
+
+	private boolean findServerConnection(){
+		if (infraUbiBroker.hasInfraConnection())
+			return true;
+		
+		try {
+			//Finding a server connection
+			System.out.println("***Finding SERVER Connection");
+			infraUbiBroker.updateInfraConnection();
+			
+			if(infraUbiBroker.hasInfraConnection()){
+				infraDomain = infraUbiBroker.getDomain(getName(), Provider.INFRA);
+				return true;
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (TupleSpaceException e) {
+			e.printStackTrace();
+		}
+		
+		return false;
 	}
 }
