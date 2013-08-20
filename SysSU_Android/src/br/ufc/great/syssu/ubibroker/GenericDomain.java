@@ -126,6 +126,10 @@ public class GenericDomain implements IDomain {
 
 		List<Tuple> tuples = new ArrayList<Tuple>();
 
+		if (scope == null){
+			scope = new Scope();
+		}
+		
 		switch (provider) {
 		case LOCAL:
 			if(localDomain != null){
@@ -134,7 +138,7 @@ public class GenericDomain implements IDomain {
 			}
 			break;
 		case INFRA:
-			if(infraDomain != null && findServerConnection()){
+			if(findServerConnection() && infraDomain != null){
 				System.out.println("***Buscando INFRA");			
 				tuples = infraDomain.read(pattern, restriction, key, scope);
 			}
@@ -416,8 +420,10 @@ public class GenericDomain implements IDomain {
 	}
 
 	private boolean findServerConnection(){
-		if (infraUbiBroker.hasInfraConnection())
+		
+		if (infraUbiBroker.hasInfraConnection()){
 			return true;
+		}
 		
 		try {
 			//Finding a server connection

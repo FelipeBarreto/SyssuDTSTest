@@ -3,8 +3,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.StreamHandler;
 
-import br.ufc.great.syssu.base.Pattern;
-import br.ufc.great.syssu.base.Provider;
 import br.ufc.great.syssu.base.Scope;
 import br.ufc.great.syssu.base.Tuple;
 import br.ufc.great.syssu.base.interfaces.IDomain;
@@ -59,7 +57,17 @@ public class Main {
 			LocalUbiBroker localBroker = LocalUbiBroker.createUbibroker();
 			// Get a domain (tuple space subset) from local broker
 			IDomain localDomain = localBroker.getDomain("scopeGreat");
-			testarPut(localDomain, 10, "INFRA-SERVER");
+			
+			
+			Scope profScope = (Scope) new Scope().addField("cargo", "aluno").addField("disciplina", "geologia");
+			Scope alunoScope = (Scope) new Scope().addField("cargo", "professor").addField("disciplina", "geologia");
+			Scope geologiaScope = (Scope) new Scope().addField("disciplina", "geologia");
+			
+			testarPut(localDomain, 3, "INFRA-SERVER", profScope);
+			testarPut(localDomain, 10, "INFRA-SERVER", alunoScope);
+			testarPut(localDomain, 7, "INFRA-SERVER", geologiaScope);
+			testarPut(localDomain, 10, "INFRA-SERVER", null);
+			
 			//System.out.println("removed " + localDomain.take((Pattern) new Pattern().addField("contextkey", "?"), "", "").size());
 
 
@@ -69,7 +77,7 @@ public class Main {
 		}
 	}
 
-	public static void testarPut(IDomain domain, int qtyTuples, String value) {
+	public static void testarPut(IDomain domain, int qtyTuples, String value, Scope scope) {
 		try {
 			System.out.println("\n -- testarPut -- \n");
 			// Create tuples
@@ -77,18 +85,18 @@ public class Main {
 
 			for (int i = 0; i < qtyTuples; i++) {
 
-				tuple = (Tuple) new Tuple().addField("contextkey","temp").
-						//						addField("source", "physicalsensor").
+				tuple = (Tuple) new Tuple().addField("contextkey","context.ambient.temperature").
+												addField("source", "physicalsensor").
 						addField("value",  18 + (int) (Math.random()*5)).
-						//						addField("timestamp", System.currentTimeMillis()).
-						//						addField("accurace", 0.8).
-						//						addField("unit", "C").
+//												addField("timestamp", System.currentTimeMillis()).
+//												addField("accurace", 0.8).
+//												addField("unit", "C").
 						addField("cont", i+1).
 						addField("provider", value);
 
-//				if (i == 1) {
-//					tuple.setScope(hScope);
-//				}
+				if (scope != null)
+					tuple.setScope(scope);
+				
 
 				//Tuple insert
 				domain.put(tuple, null);

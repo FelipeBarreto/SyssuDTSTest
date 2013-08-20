@@ -84,7 +84,7 @@ public class TCPNetworkClient {
 			try {
 				socket = new Socket();
 				SocketAddress sockaddr = new InetSocketAddress(message[1], Integer.parseInt(message[2]));
-				socket.connect(sockaddr, 3000);
+				socket.connect(sockaddr, 300);
 
 				is = socket.getInputStream();
 				writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), CHAR_SET));
@@ -135,7 +135,7 @@ public class TCPNetworkClient {
 			try {
 				socket = new Socket();
 				SocketAddress sockaddr = new InetSocketAddress(ping[1], Integer.parseInt(ping[2]));
-				socket.connect(sockaddr, 3000);
+				socket.connect(sockaddr, 300);
 
 			} catch (IOException e) {
 				result = "Can't connect";

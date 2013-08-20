@@ -81,7 +81,7 @@ public class NetworkClient {
 					networkManager.sendBroadcastMessage(new JSONObject(message)); //.put("requesterAddress", this.requesterAddress));
 					//networkManager.sendMessage(new JSONObject(message), this.address);
 
-					boolean timeout = !AdhocNetworkManager.semaphore.tryAcquire(qtyDevices, qtyDevices * 6, TimeUnit.SECONDS);
+					boolean timeout = !AdhocNetworkManager.semaphore.tryAcquire(qtyDevices, qtyDevices * 3, TimeUnit.SECONDS);
 
 					if(timeout) 
 						Log.i("ad", "TIMEOUT");

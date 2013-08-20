@@ -50,8 +50,8 @@ public class AdhocNetworkManager {
 		String tempResponse = newResponse;
 
 		response = response.substring(response.indexOf("[") + 1, response.indexOf("]"));
-		response = tempResponse.substring(0, tempResponse.indexOf("[") + 1) + response + "," + tempResponse.substring(tempResponse.indexOf("[") + 1);
-
+		response = tempResponse.substring(0, tempResponse.indexOf("[") + 1).concat(response).concat(",").concat(tempResponse.substring(tempResponse.indexOf("[") + 1));
+		
 		return response;
 	}
 
@@ -83,16 +83,6 @@ public class AdhocNetworkManager {
 			if(msn instanceof JSONRPC2Request){
 				System.out.println("instanceof JSONRPC2Request");
 				try {
-					if (message.has("requesterAddress"))
-					{
-						String ra = message.getString("requesterAddress");
-						if (ra != null && ra != "")
-						{
-							// Get and remove requester address from received message
-							requesterAddress = message.getString("requesterAddress");
-							message.remove("requester");
-						}
-					}
 					msn = JSONRPC2Message.parse(message.toString());
 
 					String response = "";

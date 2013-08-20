@@ -59,9 +59,9 @@ public class SysSUDTSTester extends Activity {
 	private Scope allScope = (Scope) new Scope().addField("happyScope", "happy").addField("sadScope", "sad").addField("tag", "master").addField("x", "y");
 
 	// experiment varialbles
-	private static final int qtyLocalTuple = 10;
-	private static final int qtyOfReads = 100;
-	private static final long interReadDelay = 20000; //miliseconds - to avoid timeout
+	private static final int qtyLocalTuple = 1;
+	private static final int qtyOfReads = 10;
+	private static final long interReadDelay = 300; //miliseconds - to avoid timeout
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -143,15 +143,63 @@ public class SysSUDTSTester extends Activity {
 			switch (item.getItemId()) {
 
 			case R.id.menu_Experiment:
-				//				experiment(Provider.ANY, allScope);
-//				experiment(Provider.LOCAL, allScope);
-				for (int i = 0; i < 30; i++) {					
-					experiment(Provider.ADHOC, allScope);
-					experiment(Provider.LOCAL, allScope);
-					experiment(Provider.INFRA, allScope);
-					System.out.println("*EXP* " + i + " roud");
+				// Escopo
+				Scope profScope = (Scope) new Scope().addField("cargo", "aluno").addField("disciplina", "geologia");
+				Scope alunoScope = (Scope) new Scope().addField("cargo", "professor").addField("disciplina", "geologia");
+				Scope geologiaScope = (Scope) new Scope().addField("disciplina", "geologia");
+
+				testarPut(domain, qtyLocalTuple, myBluetoothName, Provider.LOCAL);
+				domain.take((Pattern) new Pattern().addField("?", "?"), "", "", Provider.LOCAL);
+
+				for (int i = 0; i < 3; i++) {			
+					experiment(Provider.ANY, profScope);
 				}
-				//				experiment(Provider.ALL, allScope);
+				try {
+					Thread.sleep(20000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				
+				for (int i = 0; i < 3; i++) {		
+					experiment(Provider.ANY, alunoScope);
+				}
+				try {
+					Thread.sleep(20000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+
+				for (int i = 0; i < 3; i++) {		
+					experiment(Provider.ANY, geologiaScope);
+				}
+				try {
+					Thread.sleep(20000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+
+				for (int i = 0; i < 3; i++) {		
+					experiment(Provider.ANY, null);
+				}
+				
+//Acesso transparente				
+//				for (int i = 0; i < 3; i++) {		
+//					domain.take((Pattern) new Pattern().addField("?", "?"), "", "", Provider.LOCAL);
+//					domain.take((Pattern) new Pattern().addField("?", "?"), "", "", Provider.INFRA);
+//					
+//					testarPut(domain, qtyLocalTuple, myBluetoothName, Provider.LOCAL);
+//					testarPut(domain, qtyLocalTuple, "SERVER", Provider.INFRA);
+//					experiment(Provider.ANY, null);
+//					
+//					domain.take((Pattern) new Pattern().addField("?", "?"), "", "", Provider.LOCAL);
+//					experiment(Provider.ANY, null);
+//					
+//					domain.take((Pattern) new Pattern().addField("?", "?"), "", "", Provider.INFRA);
+//					experiment(Provider.ANY, null);
+//					
+//					System.out.println("*EXP* " + i + " roud");
+//				}
+
 				break;
 			case R.id.menu_Put:
 				testarPut(domain, 1, myBluetoothName, Provider.LOCAL);
@@ -229,11 +277,16 @@ public class SysSUDTSTester extends Activity {
 
 
 	public void experiment(Provider provider, Scope scope) throws TupleSpaceException, TupleSpaceSecurityException {
-		String logMsg = "\n Read times: " + qtyOfReads + " - Connected Devices: " + getConnectedDevices() + " by " + provider + " read" ;
+		String strScope = "vazio";
+		if(scope != null)
+			strScope = scope.getField(0).getValue().toString();
+		
+//		String logMsg = "\n Read times: " + qtyOfReads + " - Connected Devices: " + getConnectedDevices() + " by " + provider + " read" ;
+		String logMsg = "\n Read times: " + qtyOfReads + " - Scope: " + strScope + " by " + provider + " read" ;
 		String providers = "";
 		List<Tuple> allTuples = new ArrayList<Tuple>();
 		List<Tuple> tuples = null;
-		Pattern pattern = (Pattern) new Pattern().addField("contextkey", "temp");
+		Pattern pattern = (Pattern) new Pattern().addField("contextkey", "?");
 
 		Log.i("ad", "*** Experiment ***  " + "\n Read times: " + qtyOfReads + " - Connected Devices: " + getConnectedDevices());
 		Log.i("ad", "i, startTime , stopTime , (stopTime-startTime) , sourceProviders , qtyOfTuples");
@@ -245,7 +298,7 @@ public class SysSUDTSTester extends Activity {
 
 		for (int i = 0; i < qtyOfReads; i++) {
 			long start = System.currentTimeMillis();
-			tuples = domain.read(pattern, "function filter(tuple) {return (tuple.value > 17)}", scope, provider);
+			tuples = domain.read(pattern, "", scope, provider);
 			long stop = System.currentTimeMillis();
 
 			try {
@@ -255,14 +308,14 @@ public class SysSUDTSTester extends Activity {
 			}
 
 			if (tuples != null && !tuples.isEmpty()){
-				providers = tuples.get(0).getField(3).getValue().toString();
+				providers = tuples.get(0).getField(4).getValue().toString();
 
 				Set<String> pSet = new HashSet<String>();
 				pSet.add(providers);
 
 				String p;
 				for (Tuple tp : tuples) {
-					p = tp.getField(3).getValue().toString();
+					p = tp.getField(4).getValue().toString();
 					if (pSet.add(p)){
 						providers = providers + "-" + p; 
 					}
@@ -285,7 +338,7 @@ public class SysSUDTSTester extends Activity {
 
 		Log.i("ad", " *** End of Experiment *** (read " + allTuples.size() + " tuples)");
 
-		LogFile("syssudts_exp_" + provider + ".txt", logMsg);
+		LogFile("syssudts_exp_" + provider + "_scope_" + strScope + ".txt", logMsg);
 
 		System.out.println("Qty of read tuples: " + allTuples.size());
 		msgTextView.append("\n Qty of read tuples: " + allTuples.size() + " from " + providers + " by " + provider + " read" );
@@ -300,12 +353,13 @@ public class SysSUDTSTester extends Activity {
 			List<Tuple> tuples = new ArrayList<Tuple>();
 
 			for (int i = 0; i < qtyTuples; i++) {
-				tuple = (Tuple) new Tuple().addField("contextkey","temp").
-						//						addField("source", "physicalmobilesensor").
+
+				tuple = (Tuple) new Tuple().addField("contextkey","context.ambient.temperature").
+						addField("source", "mobileSensor").
 						addField("value",  18 + (int) (Math.random()*5)).
-						//						addField("timestamp", System.currentTimeMillis()).
-						//						addField("accurace", 0.8).
-						//						addField("unit", "C").
+						//												addField("timestamp", System.currentTimeMillis()).
+						//												addField("accurace", 0.8).
+						//												addField("unit", "C").
 						addField("cont", tupleCont++).
 						addField("provider", value);
 
@@ -340,7 +394,8 @@ public class SysSUDTSTester extends Activity {
 			List<Tuple> tuples = null;
 
 			//one read
-			tuples = domain.read(pattern, "function filter(tuple) {return (tuple.value > 17)}", "", allScope, provider);
+			//			tuples = domain.read(pattern, "function filter(tuple) {return (tuple.value > 17)}", "", allScope, provider);
+			tuples = domain.read(pattern,"", null, provider);
 
 			// Writes tuples in tupleSpace EditText
 			printTuples(tuples, dsc);
