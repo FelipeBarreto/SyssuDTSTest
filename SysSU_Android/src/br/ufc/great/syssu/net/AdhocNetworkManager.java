@@ -29,7 +29,9 @@ public class AdhocNetworkManager {
 	public static NetworkManager getNetworkManagerInstance(Context context){
 		if (instance == null) {
 			setContext(context);
-			instance = new NetworkManager(context, messageListener);
+			instance = NetworkManager.getInstance();
+			instance.init(context);
+			instance.subscribe(messageListener);
 			instance.onResume();
 			instance.subscribeBluetoothOptionalEvents(bluetoothEventsListener);
 			tsMonitor = new TS_Monitor();
@@ -62,10 +64,10 @@ public class AdhocNetworkManager {
 			// TODO Auto-generated method stub
 			System.out.println(">>>NetworkEventListener>>> ConnectionChanged from " + previousState + " to " + state);
 		}
-
+		
 		@Override
-		public synchronized void onReceiveMessage(String deviceName, String deviceAddress, JSONObject message) {
-			System.out.println("\n\n >>>*** RECIVE MSG ***<<< \n from: " + deviceName + " msg: " + message.toString());
+		public void onReceiveMessage(String deviceAddress, JSONObject message) {
+			System.out.println("\n\n >>>*** RECIVE MSG ***<<< \n from: " + deviceAddress + " msg: " + message.toString());
 
 			JSONRPC2Message msn = null;
 			String requesterAddress = deviceAddress;
@@ -112,6 +114,7 @@ public class AdhocNetworkManager {
 				semaphore.release();
 			}
 			System.out.println(">>>NetworkEventListener>>> onReceiveMessage >>>END");
+			
 		}
 
 		@Override
@@ -139,17 +142,18 @@ public class AdhocNetworkManager {
 		}
 
 		@Override
-		public void onDeviceDisconnected(String deviceName, String deviceAddress) {
-			// TODO Auto-generated method stub
-			System.out.println(">>>NetworkEventListener>>> DeviceDisconnected >> " + deviceName);
-			tsMonitor.removeAvailableDevice(deviceName);
-		}
-
-		@Override
 		public void onDeviceConnected(String deviceName, String deviceAddress) {
 			// TODO Auto-generated method stub
 			System.out.println(">>>NetworkEventListener>>> DeviceConnected >>" + deviceName);
 			tsMonitor.addAvailableDevice(deviceName, deviceAddress);
+		}
+
+		@Override
+		public void onDeviceDisconnected(String deviceAddress) {
+			// TODO Auto-generated method stub
+			System.out.println(">>>NetworkEventListener>>> DeviceDisconnected >> " + deviceAddress);
+			tsMonitor.removeAvailableDevice(deviceAddress);
+			
 		}
 	};
 

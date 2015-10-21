@@ -22,8 +22,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
-import br.ufc.great.somc.networklayer.R;
 import br.ufc.great.somc.networklayer.base.NetworkManager;
+import br.ufc.great.syssu.R;
 import br.ufc.great.syssu.base.Pattern;
 import br.ufc.great.syssu.base.Provider;
 import br.ufc.great.syssu.base.Scope;
@@ -371,7 +371,7 @@ public class SysSUDTSTester extends Activity {
 				//					tuple.setScope(sScope);
 				//				}
 
-				//Tuple insert		
+				// Tuple insert		
 				domain.put (tuple, provider);		
 				tuples.add(tuple);
 			}
